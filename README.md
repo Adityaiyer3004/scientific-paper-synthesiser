@@ -1,44 +1,82 @@
-# Scientific Paper Synthesiser 📚
 
-This project is an intelligent scientific paper assistant built with **Python**, **Streamlit**, and **OpenAI**.  
-It allows users to **upload multiple PDFs**, **ask questions** about them, and **receive synthesised answers**.
+# Scientific Paper Synthesiser
 
----
-
-## ✨ Features
-
-- 📄 Upload multiple scientific papers in PDF format
-- 🧠 Retrieve and synthesise answers from the uploaded papers
-- ⚡ Fast semantic search using **FAISS** and **Sentence Transformers**
-- 🛡️ OpenAI key protected via `.env` file
-- 🖥️ Built with an interactive **Streamlit** web app
-- 🔍 Shows the **supporting context chunks** used to generate each answer
+This is a **Streamlit-based application** that allows users to:
+- Upload multiple scientific papers (PDFs),
+- Ask questions about the papers,
+- Get synthesised answers based on document retrieval and Openai-powered summarization.
 
 ---
 
-## 🚀 How to Run Locally
+## Features
+- 📄 Upload multiple PDFS.
+- 🔍 Retrieve the most relevant chunks using FAISS and re-rank with cosine similarity.
+- ✍️ Generate answers based only on the provided documents using OpenAI GPT-3.5.
+- 🧠 Keep a full, expandable chat history.
+- 🔒 API key is managed securely using the .env` file (no hardcoding).
+- 📈 Clean, aesthetic layout with chunked paragraph formatting for easy reading.
 
-1. **Clone this repository**:
-   ```bash
-   git clone https://github.com/AdityaIyer3004/scientific-paper-synthesiser.git
-   cd scientific-paper-synthesiser
+---
 
+## Folder Structure
+```
+scientific-paper-synthesizer/
+│
+├── app.py                 # Main Streamlit application
+├── build_index.py          # (optional future feature) - to build custom indexes
+├── parse_pdf.py            # (optional) utility functions to parse PDFs
+├── query_engine.py         # Core query and retrieval engine
+├── .gitignore              # Git ignore file
+├── .env                    # Hidden environment variable file (NOT pushed to GitHub)
+└── README.txt              # This README file
+```
 
-##  Create a virtual environment and activate it:
+---
 
-python3 -m venv .venv
-source .venv/bin/activate   # Mac/Linux
-.venv\Scripts\activate      # Windows
+## How to Run Locally
 
-## Install the requirements:
+1. Clone this repository:
 
+```bash
+git clone https://github.com/AdityaIyer3004/scientific-paper-synthesiser.git
+cd scientific-paper-synthesizer
+```
+
+2. Install the required packages:
+
+```bash
 pip install -r requirements.txt
+```
 
-## Set up your .env file with your OpenAI API key:
+3. Create a `.env` file:
 
+```
 OPENAI_API_KEY=your-openai-api-key-here
+```
 
-## Run the Streamlit app:
+4. Run the Streamlit app:
 
+```bash
 streamlit run app.py
+```
+
+---
+
+## Deployment
+
+- You can deploy this project for free using platforms like **Streamlit Community Cloud** or **Render**.
+- Just make sure your `.env` secrets are properly set in deployment environment variables.
+
+---
+
+## Future Improvements
+- Add more efficient retrieval (e.g., hybrid search)
+- Include document summarisation before question answering
+- Optimise for large document datasets
+
+---
+
+## Credits
+- Developed by Aditya Iyer.
+- Powered by OpenAI, FAISS, Sentence Transformers, and Streamlit.
 
