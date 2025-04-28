@@ -38,7 +38,8 @@ bash
 Copy
 Edit
 pip install -r requirements.txt
-Set up your .env file with your OpenAI API key:
+
+## Set up your .env file with your OpenAI API key:
 
 ini
 Copy
