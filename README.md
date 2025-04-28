@@ -45,7 +45,8 @@ ini
 Copy
 Edit
 OPENAI_API_KEY=your-openai-api-key-here
-Run the Streamlit app:
+
+## Run the Streamlit app:
 
 bash
 Copy
