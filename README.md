@@ -77,6 +77,13 @@ streamlit run app.py
 ---
 
 ## Credits
-- Developed by Aditya Iyer.
-- Powered by OpenAI, FAISS, Sentence Transformers, and Streamlit.
+- **📝 License**
+
+This project is licensed under the MIT License.
+
+👨‍💻 Developed by Aditya Iyer
+🌟 If you found this useful, star ⭐ the repo! 🚀
+
+
+🌟 Powered by OpenAI, FAISS, Sentence Transformers, and Streamlit.
 
