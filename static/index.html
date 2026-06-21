@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NeuroPaper AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050810;--bg2:#080d18;--bg3:#0d1525;
+  --cyan:#06b6d4;--purple:#7c3aed;--violet:#8b5cf6;--pink:#ec4899;--green:#10b981;
+  --text:#f1f5f9;--muted:#64748b;--dim:#1e293b;
+  --glass:rgba(255,255,255,0.03);--glass2:rgba(255,255,255,0.06);
+  --border:rgba(99,102,241,0.18);--border2:rgba(6,182,212,0.2);
+  --glow-c:0 0 30px rgba(6,182,212,0.35);
+  --glow-p:0 0 30px rgba(124,58,237,0.35);
+  --r:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
+::selection{background:rgba(124,58,237,0.4);color:#fff}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--purple),var(--cyan));border-radius:4px}
+
+/* ── BOOT SCREEN ── */
+#boot{position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;transition:opacity 0.8s ease}
+#boot.fade-out{opacity:0;pointer-events:none}
+.boot-logo{font-family:'Orbitron',monospace;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.1em}
+.boot-lines{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--cyan);width:min(400px,90vw);opacity:0.85}
+.boot-line{opacity:0;transform:translateX(-10px);transition:all 0.3s ease;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.6rem}
+.boot-line.show{opacity:1;transform:none}
+.boot-line::before{content:'>';color:var(--purple);font-weight:700}
+.boot-bar-wrap{width:min(400px,90vw);height:2px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden}
+.boot-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--cyan));width:0%;transition:width 0.1s linear;border-radius:2px;box-shadow:0 0 10px var(--cyan)}
+
+/* ── BACKGROUND CANVAS ── */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── LAYOUT ── */
+#app{position:relative;z-index:1;min-height:100vh;display:none}
+#app.visible{display:block;animation:fadeIn 0.6s ease}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0.9rem 2.5rem;background:rgba(5,8,16,0.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(99,102,241,0.1)}
+.nav-brand{font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:900;letter-spacing:0.15em;background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-badge{font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.2em;color:var(--green);border:1px solid rgba(16,185,129,0.3);padding:0.25em 0.8em;border-radius:100px;display:flex;align-items:center;gap:0.4em}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 2s ease infinite}
+
+main{max-width:1100px;margin:0 auto;padding:0 2rem 6rem}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:5rem 0 3rem;animation:fadeUp 0.8s ease both}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.4em;color:var(--cyan);opacity:0.7;margin-bottom:1.5rem;text-transform:uppercase}
+.hero-title{font-family:'Orbitron',monospace;font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 0%,var(--cyan) 40%,var(--violet) 70%,var(--pink) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem;filter:drop-shadow(0 0 40px rgba(124,58,237,0.2))}
+.hero-sub{font-size:1.05rem;color:var(--muted);font-weight:300;letter-spacing:0.03em;max-width:500px;margin:0 auto}
+
+/* ── GLASS CARD ── */
+.card{background:var(--glass);border:1px solid var(--border);border-radius:var(--r);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:border-color 0.3s,box-shadow 0.3s}
+.card:hover{border-color:rgba(99,102,241,0.35)}
+.card-label{font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:0.35em;color:var(--cyan);text-transform:uppercase;opacity:0.65;margin-bottom:1.2rem}
+
+/* ── SECTIONS ── */
+.section{margin-bottom:2rem;animation:fadeUp 0.6s ease both}
+
+/* ── UPLOAD ZONE ── */
+.upload-grid{display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:start}
+@media(max-width:700px){.upload-grid{grid-template-columns:1fr}}
+.drop-zone{border:2px dashed rgba(6,182,212,0.25);border-radius:var(--r);padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;background:rgba(6,182,212,0.02)}
+.drop-zone::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(124,58,237,0.05));opacity:0;transition:opacity 0.3s}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--cyan);background:rgba(6,182,212,0.06);box-shadow:inset 0 0 30px rgba(6,182,212,0.04)}
+.drop-zone:hover::before,.drop-zone.dragover::before{opacity:1}
+.upload-icon{width:48px;height:48px;margin:0 auto 1rem;opacity:0.6}
+.drop-text{font-size:0.95rem;color:var(--muted);margin-bottom:0.5rem}
+.drop-hint{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);opacity:0.5}
+#file-input{display:none}
+.file-list{margin-top:1rem;display:flex;flex-direction:column;gap:0.4rem}
+.file-item{display:flex;align-items:center;gap:0.6rem;font-size:0.82rem;color:var(--text);background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:0.4rem 0.8rem;animation:slideIn 0.2s ease}
+.file-item svg{flex-shrink:0;color:var(--green)}
+
+/* ── MODEL SELECTOR ── */
+.model-panel{padding:1.5rem}
+.model-toggle{display:flex;flex-direction:column;gap:0.6rem;margin-top:0.5rem}
+.model-opt{display:flex;align-items:center;gap:0.8rem;padding:0.9rem 1rem;border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all 0.2s;background:transparent}
+.model-opt.active{border-color:var(--violet);background:rgba(139,92,246,0.1);box-shadow:0 0 0 1px rgba(139,92,246,0.2)}
+.model-opt:hover:not(.active){border-color:rgba(139,92,246,0.3);background:rgba(139,92,246,0.05)}
+.model-radio{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);flex-shrink:0;transition:all 0.2s;position:relative}
+.model-opt.active .model-radio{border-color:var(--violet);background:var(--violet);box-shadow:0 0 8px var(--violet)}
+.model-opt.active .model-radio::after{content:'';position:absolute;inset:3px;background:#fff;border-radius:50%}
+.model-name{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:500;color:var(--text)}
+.model-desc{font-size:0.72rem;color:var(--muted);margin-top:0.1rem}
+
+/* ── UPLOAD BUTTON ── */
+.btn{display:inline-flex;align-items:center;gap:0.6em;font-family:'Orbitron',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;border:none;border-radius:10px;padding:0.75rem 1.6rem;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden}
+.btn-primary{background:linear-gradient(135deg,var(--purple),var(--violet));color:#fff;box-shadow:0 4px 20px rgba(124,58,237,0.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,0.5)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.btn-secondary{background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.3)}
+.btn-secondary:hover{background:rgba(6,182,212,0.18);border-color:var(--cyan);box-shadow:var(--glow-c);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+.upload-actions{display:flex;gap:0.8rem;align-items:center;margin-top:1.2rem;flex-wrap:wrap}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;animation:fadeUp 0.5s ease}
+.stat-card{padding:1.2rem 1.5rem;text-align:center}
+.stat-num{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;line-height:1;margin-bottom:0.4rem}
+.stat-label{font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase}
+.stat-num.cyan{color:var(--cyan);text-shadow:0 0 20px rgba(6,182,212,0.5)}
+.stat-num.violet{color:var(--violet);text-shadow:0 0 20px rgba(139,92,246,0.5)}
+.stat-num.green{color:var(--green);text-shadow:0 0 20px rgba(16,185,129,0.5)}
+#stats-section{display:none}
+
+/* ── QUERY SECTION ── */
+#query-section{display:none}
+.query-input-wrap{position:relative;margin:0.5rem 0 1.2rem}
+.query-input{width:100%;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:12px;padding:1rem 3.5rem 1rem 1.2rem;font-family:'Space Grotesk',sans-serif;font-size:1rem;color:var(--text);outline:none;transition:all 0.3s;resize:none}
+.query-input::placeholder{color:var(--muted)}
+.query-input:focus{border-color:var(--violet);box-shadow:var(--glow-p),inset 0 0 20px rgba(124,58,237,0.03)}
+.query-submit{position:absolute;right:0.6rem;bottom:0.6rem;background:linear-gradient(135deg,var(--purple),var(--violet));border:none;border-radius:8px;padding:0.5rem 0.7rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;color:#fff}
+.query-submit:hover{transform:scale(1.05);box-shadow:0 0 20px rgba(124,58,237,0.5)}
+.query-submit:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.summarize-row{display:flex;gap:0.8rem;flex-wrap:wrap;align-items:center}
+#paper-select{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:0.55rem 1rem;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:0.85rem;outline:none;cursor:pointer;transition:border-color 0.2s}
+#paper-select:focus{border-color:var(--cyan)}
+
+/* ── SCANNING ANIMATION ── */
+@keyframes scan{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+.scan-line{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);pointer-events:none;z-index:50;opacity:0;top:0}
+.scan-line.active{opacity:0.4;animation:scan 3s linear}
+
+/* ── LOADING SPINNER ── */
+.loader{display:inline-flex;gap:0.3rem;align-items:center}
+.loader span{width:6px;height:6px;border-radius:50%;background:var(--violet);animation:bounce 0.8s ease infinite}
+.loader span:nth-child(2){animation-delay:0.15s}
+.loader span:nth-child(3){animation-delay:0.3s}
+
+/* ── RESULTS ── */
+#result-section{display:none;animation:fadeUp 0.5s ease}
+.answer-wrap{padding:2rem}
+.answer-source{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem}
+.source-tag{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.25);color:var(--cyan);padding:0.2em 0.7em;border-radius:100px;font-size:0.65rem}
+.answer-text{font-size:1rem;line-height:1.8;color:var(--text);position:relative}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--violet);margin-left:2px;animation:blink-cursor 0.8s ease infinite;vertical-align:text-bottom}
+
+/* ── EVAL PANEL ── */
+.eval-panel{margin-top:1.8rem;border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:1.2rem 1.4rem;background:rgba(99,102,241,0.04)}
+.eval-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.eval-label{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase}
+.eval-badge{font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.2em 0.8em;border-radius:100px;font-weight:600;letter-spacing:0.05em}
+.badge-low{background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10b981}
+.badge-medium{background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#f59e0b}
+.badge-high{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444}
+.eval-metrics{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem 1.6rem}
+.eval-metric{}
+.eval-metric-label{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;display:flex;justify-content:space-between;margin-bottom:0.35rem}
+.eval-metric-label span:last-child{color:var(--text);font-weight:600}
+.eval-bar{height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden}
+.eval-fill{height:100%;border-radius:2px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);width:0%}
+.fill-faith{background:linear-gradient(90deg,#6366f1,#8b5cf6)}
+.fill-rel{background:linear-gradient(90deg,#06b6d4,#6366f1)}
+.fill-comp{background:linear-gradient(90deg,#10b981,#06b6d4)}
+.fill-grnd{background:linear-gradient(90deg,#f59e0b,#10b981)}
+.eval-verdict{margin-top:1rem;font-size:0.8rem;color:var(--muted);font-style:italic;line-height:1.5;border-top:1px solid var(--border);padding-top:0.8rem}
+.guard-warn{margin-top:0.8rem;padding:0.6rem 1rem;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:8px;font-size:0.78rem;color:#f59e0b;font-family:'JetBrains Mono',monospace}
+
+/* ── CHUNKS ── */
+.chunks-section{margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.5rem}
+.chunks-toggle{background:none;border:none;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:0.5rem;padding:0;transition:color 0.2s}
+.chunks-toggle:hover{color:var(--text)}
+.chunks-toggle svg{transition:transform 0.3s}
+.chunks-toggle.open svg{transform:rotate(90deg)}
+.chunks-list{overflow:hidden;max-height:0;transition:max-height 0.4s ease}
+.chunks-list.open{max-height:2000px}
+.chunk-item{margin-top:1rem;border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;transition:border-color 0.2s}
+.chunk-item:hover{border-color:rgba(99,102,241,0.25)}
+.chunk-header{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;background:rgba(255,255,255,0.02)}
+.chunk-meta{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap}
+.pill{font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.2em 0.6em;border-radius:100px;border:1px solid}
+.pill-page{color:#94a3b8;border-color:rgba(148,163,184,0.25);background:rgba(148,163,184,0.07)}
+.pill-src{color:#a78bfa;border-color:rgba(167,139,250,0.25);background:rgba(167,139,250,0.07);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score-bar-wrap{display:flex;align-items:center;gap:0.6rem}
+.score-label{font-family:'Orbitron',monospace;font-size:0.7rem;color:var(--cyan)}
+.score-bar{width:80px;height:4px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden}
+.score-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:4px;transition:width 0.6s ease}
+.chunk-body{padding:0.8rem 1rem;font-size:0.87rem;line-height:1.7;color:#94a3b8}
+
+/* ── HISTORY ── */
+#history-section{display:none;animation:fadeUp 0.5s ease}
+.history-item{margin-bottom:0.8rem;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color 0.2s}
+.history-item:hover{border-color:rgba(139,92,246,0.35)}
+.history-q{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;cursor:pointer;user-select:none;background:var(--glass)}
+.history-q-text{font-size:0.9rem;font-weight:500;color:var(--text)}
+.history-q-time{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--muted)}
+.history-body{overflow:hidden;max-height:0;transition:max-height 0.35s ease}
+.history-body.open{max-height:1200px}
+.history-ans{padding:1rem 1.2rem 1.2rem;font-size:0.9rem;line-height:1.75;color:#cbd5e1;border-top:1px solid var(--border)}
+
+/* ── TOAST ── */
+.toast-stack{position:fixed;bottom:2rem;right:2rem;z-index:10000;display:flex;flex-direction:column;gap:0.5rem;pointer-events:none}
+.toast{font-family:'JetBrains Mono',monospace;font-size:0.75rem;padding:0.7rem 1.2rem;border-radius:10px;border:1px solid;backdrop-filter:blur(12px);animation:toast-in 0.3s ease,toast-out 0.3s ease 2.7s both;pointer-events:none}
+.toast-success{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:var(--green)}
+.toast-error{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:#f87171}
+.toast-info{background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:var(--cyan)}
+
+/* ── DIVIDER ── */
+.neon-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.4),transparent);margin:2.5rem 0;opacity:0.6}
+
+/* ── KEYFRAMES ── */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 8px var(--green)}50%{opacity:0.4;box-shadow:none}}
+@keyframes blink-cursor{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes count-up{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes toast-out{from{opacity:1}to{opacity:0;transform:translateX(20px)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+</style>
+</head>
+<body>
+
+<!-- Boot screen -->
+<div id="boot">
+  <div class="boot-logo">NEUROPAPER AI</div>
+  <div class="boot-lines" id="boot-lines"></div>
+  <div class="boot-bar-wrap"><div class="boot-bar" id="boot-bar"></div></div>
+</div>
+
+<!-- Hex grid canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Scan line -->
+<div class="scan-line" id="scan-line"></div>
+
+<!-- Toast stack -->
+<div class="toast-stack" id="toast-stack"></div>
+
+<!-- Main app -->
+<div id="app">
+  <nav>
+    <div class="nav-brand">NEUROPAPER·AI</div>
+    <div class="nav-badge">
+      <span class="status-dot"></span>
+      SYSTEM ONLINE
+    </div>
+  </nav>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">// NEURAL RESEARCH INTELLIGENCE v2.0</div>
+      <h1 class="hero-title">NeuroPaper AI</h1>
+      <p class="hero-sub">Upload scientific papers. Query with natural language. Synthesize knowledge at neural speed.</p>
+    </section>
+
+    <!-- Upload + config -->
+    <section class="section" id="upload-section">
+      <div class="card" style="padding:1.8rem">
+        <div class="card-label">// PAPER_INGESTION</div>
+        <div class="upload-grid">
+          <div>
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+              <svg class="upload-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M28 8H12a4 4 0 00-4 4v24a4 4 0 004 4h24a4 4 0 004-4V20l-12-12z" stroke="rgba(6,182,212,0.6)"/>
+                <path d="M28 8v12h12M24 24v8M20 28l4-4 4 4" stroke="rgba(6,182,212,0.6)"/>
+              </svg>
+              <div class="drop-text">Drop PDF papers here</div>
+              <div class="drop-hint">or click to browse · multiple files supported</div>
+              <div class="file-list" id="file-list"></div>
+            </div>
+            <input type="file" id="file-input" multiple accept=".pdf">
+            <div class="upload-actions">
+              <button class="btn btn-primary" id="upload-btn" disabled onclick="handleUpload()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                Index Papers
+              </button>
+              <div class="loader" id="upload-loader" style="display:none">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card model-panel" style="min-width:220px">
+            <div class="card-label">// ENGINE</div>
+            <div class="model-toggle">
+              <div class="model-opt active" data-model="llama-3.3-70b-versatile" onclick="selectModel(this)">
+                <div class="model-radio"></div>
+                <div>
+                  <div class="model-name">Llama 3.3 70B</div>
+                  <div class="model-desc">High precision · versatile</div>
+                </div>
+              </div>
+              <div class="model-opt" data-model="llama-3.1-8b-instant" onclick="selectModel(this)">
+                <div class="model-radio"></div>
+                <div>
+                  <div class="model-name">Llama 3.1 8B</div>
+                  <div class="model-desc">Fast · cost efficient</div>
+                </div>
+              </div>
+              <div class="model-opt" data-model="mixtral-8x7b-32768" onclick="selectModel(this)">
+                <div class="model-radio"></div>
+                <div>
+                  <div class="model-name">Mixtral 8x7B</div>
+                  <div class="model-desc">Long context · balanced</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section id="stats-section" class="stats-row">
+      <div class="card stat-card">
+        <div class="stat-num cyan" id="stat-papers">0</div>
+        <div class="stat-label">Papers Loaded</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-num violet" id="stat-chunks">0</div>
+        <div class="stat-label">Chunks Indexed</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-num green">384</div>
+        <div class="stat-label">Vector Dims</div>
+      </div>
+    </section>
+
+    <!-- Query -->
+    <section class="section" id="query-section">
+      <div class="card" style="padding:1.8rem">
+        <div class="card-label">// NEURAL_QUERY_INTERFACE</div>
+        <div class="query-input-wrap">
+          <textarea class="query-input" id="query-input" rows="2" placeholder="Ask anything about your uploaded papers…"></textarea>
+          <button class="query-submit" id="query-submit" onclick="handleQuery()" title="Submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+
+        <div class="neon-divider" style="margin:1rem 0"></div>
+
+        <div class="card-label" style="margin-bottom:0.8rem">// SUMMARIZE</div>
+        <div class="summarize-row">
+          <select id="paper-select">
+            <option value="">Select a paper…</option>
+          </select>
+          <button class="btn btn-secondary" onclick="handleSummarize(false)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Summarize Selected
+          </button>
+          <button class="btn btn-ghost" onclick="handleSummarize(true)">
+            Summarize All
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="result-section">
+      <div class="card">
+        <div class="answer-wrap">
+          <div class="card-label">// AI_RESPONSE</div>
+          <div class="answer-source" id="answer-source">
+            <span>SOURCE</span>
+            <span class="source-tag" id="source-tag">—</span>
+          </div>
+          <div class="answer-text" id="answer-text"></div>
+
+          <!-- Eval Panel -->
+          <div class="eval-panel" id="eval-panel" style="display:none">
+            <div class="eval-header">
+              <span class="eval-label">// LLM_JUDGE_EVAL</span>
+              <span class="eval-badge" id="eval-halluc-badge">—</span>
+            </div>
+            <div class="eval-metrics">
+              <div class="eval-metric">
+                <div class="eval-metric-label"><span>Faithfulness</span><span id="ev-faith">—</span></div>
+                <div class="eval-bar"><div class="eval-fill fill-faith" id="evb-faith"></div></div>
+              </div>
+              <div class="eval-metric">
+                <div class="eval-metric-label"><span>Relevance</span><span id="ev-rel">—</span></div>
+                <div class="eval-bar"><div class="eval-fill fill-rel" id="evb-rel"></div></div>
+              </div>
+              <div class="eval-metric">
+                <div class="eval-metric-label"><span>Completeness</span><span id="ev-comp">—</span></div>
+                <div class="eval-bar"><div class="eval-fill fill-comp" id="evb-comp"></div></div>
+              </div>
+              <div class="eval-metric">
+                <div class="eval-metric-label"><span>Groundedness</span><span id="ev-grnd">—</span></div>
+                <div class="eval-bar"><div class="eval-fill fill-grnd" id="evb-grnd"></div></div>
+              </div>
+            </div>
+            <div class="eval-verdict" id="eval-verdict"></div>
+          </div>
+
+          <div class="chunks-section">
+            <button class="chunks-toggle" id="chunks-toggle" onclick="toggleChunks()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              Supporting Evidence
+            </button>
+            <div class="chunks-list" id="chunks-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- History -->
+    <section id="history-section" style="margin-top:2rem">
+      <div class="card-label" style="margin-bottom:1rem">// SESSION_HISTORY</div>
+      <div id="history-list"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+const S = { model: 'llama-3.3-70b-versatile', files: [], history: [] };
+
+// ── BOOT SEQUENCE ──────────────────────────────────────────────────────────
+const BOOT_LINES = [
+  'INITIALIZING NEURAL SUBSTRATE…',
+  'LOADING EMBEDDING MODEL (384-DIM)…',
+  'ESTABLISHING VECTOR SPACE…',
+  'MOUNTING FAISS INDEX ENGINE…',
+  'SYSTEM ONLINE — READY',
+];
+
+async function runBoot() {
+  const container = document.getElementById('boot-lines');
+  const bar = document.getElementById('boot-bar');
+  for (let i = 0; i < BOOT_LINES.length; i++) {
+    const line = document.createElement('div');
+    line.className = 'boot-line';
+    line.textContent = BOOT_LINES[i];
+    container.appendChild(line);
+    await delay(60);
+    line.classList.add('show');
+    bar.style.width = `${((i + 1) / BOOT_LINES.length) * 100}%`;
+    await delay(i === BOOT_LINES.length - 1 ? 500 : 280);
+  }
+  await delay(400);
+  document.getElementById('boot').classList.add('fade-out');
+  await delay(900);
+  document.getElementById('app').classList.add('visible');
+  initHexGrid();
+}
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+// ── HEX GRID BACKGROUND ────────────────────────────────────────────────────
+function initHexGrid() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, hexes = [], active = new Map(), frame = 0;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    buildHexes();
+  }
+
+  function buildHexes() {
+    hexes = [];
+    const r = 42, rn = r - 2;
+    const hw = Math.sqrt(3) * r;
+    const vStep = r * 1.5;
+    const cols = Math.ceil(W / hw) + 2;
+    const rows = Math.ceil(H / vStep) + 2;
+    for (let row = -1; row < rows; row++) {
+      for (let col = -1; col < cols; col++) {
+        const x = col * hw + (row % 2 === 0 ? 0 : hw / 2);
+        const y = row * vStep;
+        hexes.push({ x, y, r: rn, key: `${row},${col}` });
+      }
+    }
+  }
+
+  function hexPath(ctx, x, y, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 3 * i - Math.PI / 6;
+      i === 0 ? ctx.moveTo(x + r * Math.cos(a), y + r * Math.sin(a))
+              : ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
+    }
+    ctx.closePath();
+  }
+
+  const PULSE_COLORS = [
+    { fill: 'rgba(124,58,237,0.55)', stroke: '#a855f7', shadow: '#7c3aed' },
+    { fill: 'rgba(6,182,212,0.45)',  stroke: '#22d3ee', shadow: '#06b6d4' },
+    { fill: 'rgba(236,72,153,0.40)', stroke: '#f472b6', shadow: '#ec4899' },
+    { fill: 'rgba(99,102,241,0.50)', stroke: '#818cf8', shadow: '#6366f1' },
+  ];
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Base grid — visible crisp lines
+    ctx.strokeStyle = 'rgba(99,102,241,0.22)';
+    ctx.lineWidth = 1;
+    hexes.forEach(h => { hexPath(ctx, h.x, h.y, h.r); ctx.stroke(); });
+
+    // Spawn up to 30 active hexes, every 2 frames
+    if (frame % 2 === 0 && active.size < 30) {
+      const h = hexes[Math.floor(Math.random() * hexes.length)];
+      if (!active.has(h.key)) {
+        const c = PULSE_COLORS[Math.floor(Math.random() * PULSE_COLORS.length)];
+        active.set(h.key, { h, c, op: 0, growing: true });
+      }
+    }
+
+    // Render active hexes — multi-pass glow
+    for (const [key, a] of active) {
+      ctx.save();
+      ctx.globalAlpha = a.op;
+
+      // Outer glow pass (large blur)
+      ctx.shadowColor = a.c.shadow;
+      ctx.shadowBlur = 55;
+      hexPath(ctx, a.h.x, a.h.y, a.h.r);
+      ctx.fillStyle = a.c.fill;
+      ctx.fill();
+
+      // Inner glow pass (tight bright core)
+      ctx.shadowBlur = 18;
+      ctx.strokeStyle = a.c.stroke;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Bright stroke at full opacity for edge definition
+      ctx.globalAlpha = a.op * 0.9;
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = a.c.stroke;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.restore();
+
+      if (a.growing) {
+        a.op += 0.04;
+        if (a.op >= 1) { a.op = 1; a.growing = false; }
+      } else {
+        a.op -= 0.008;
+        if (a.op <= 0) active.delete(key);
+      }
+    }
+
+    frame++;
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+}
+
+// ── MODEL SELECTOR ─────────────────────────────────────────────────────────
+function selectModel(el) {
+  document.querySelectorAll('.model-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  S.model = el.dataset.model;
+}
+
+// ── DRAG & DROP ────────────────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  setFiles([...e.dataTransfer.files].filter(f => f.type === 'application/pdf'));
+});
+fileInput.addEventListener('change', () => setFiles([...fileInput.files]));
+
+function setFiles(files) {
+  S.files = files;
+  const list = document.getElementById('file-list');
+  list.innerHTML = '';
+  files.forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${f.name}`;
+    list.appendChild(item);
+  });
+  document.getElementById('upload-btn').disabled = files.length === 0;
+}
+
+// ── UPLOAD ─────────────────────────────────────────────────────────────────
+async function handleUpload() {
+  if (!S.files.length) return;
+  const btn = document.getElementById('upload-btn');
+  const loader = document.getElementById('upload-loader');
+  btn.disabled = true;
+  loader.style.display = 'inline-flex';
+  triggerScan();
+
+  const form = new FormData();
+  S.files.forEach(f => form.append('files', f));
+  form.append('model', S.model);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    S.loadedFiles = data.files;
+
+    // Stats
+    const statsEl = document.getElementById('stats-section');
+    statsEl.style.display = 'grid';
+    animateNumber('stat-papers', data.papers);
+    animateNumber('stat-chunks', data.chunks);
+
+    // Populate summarize select
+    const sel = document.getElementById('paper-select');
+    sel.innerHTML = '<option value="">All papers</option>';
+    data.files.forEach(f => { const o = new Option(f, f); sel.appendChild(o); });
+
+    // Show query section
+    document.getElementById('query-section').style.display = 'block';
+    document.getElementById('query-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    toast(`${data.papers} paper${data.papers > 1 ? 's' : ''} indexed — ${data.chunks} chunks`, 'success');
+  } catch (e) {
+    toast('Upload failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    loader.style.display = 'none';
+  }
+}
+
+// ── QUERY ──────────────────────────────────────────────────────────────────
+async function handleQuery() {
+  const input = document.getElementById('query-input');
+  const q = input.value.trim();
+  if (!q) return;
+
+  const submitBtn = document.getElementById('query-submit');
+  submitBtn.disabled = true;
+  triggerScan();
+
+  showResult('', '', [], true);
+
+  try {
+    const res = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, model: S.model })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    showResult(data.answer, data.source, data.chunks, false, data.eval, data.guard);
+
+    S.history.unshift({ q, answer: data.answer, source: data.source, chunks: data.chunks, time: new Date() });
+    updateHistory();
+    toast('Answer synthesized', 'success');
+  } catch (e) {
+    toast('Query failed: ' + e.message, 'error');
+    document.getElementById('result-section').style.display = 'none';
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
+// ── SUMMARIZE ──────────────────────────────────────────────────────────────
+async function handleSummarize(all) {
+  const filename = all ? null : (document.getElementById('paper-select').value || null);
+  triggerScan();
+
+  showResult('', filename || 'All Papers', [], true);
+
+  try {
+    const res = await fetch('/api/summarize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, model: S.model })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    showResult(data.summary, data.filename, [], false, data.eval);
+    toast('Summary generated', 'info');
+  } catch (e) {
+    toast('Summarize failed: ' + e.message, 'error');
+  }
+}
+
+// Enter key on textarea
+document.getElementById('query-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleQuery(); }
+});
+
+// ── SHOW RESULT ────────────────────────────────────────────────────────────
+function showResult(text, source, chunks, loading, evalData, guardData) {
+  const section = document.getElementById('result-section');
+  const answerEl = document.getElementById('answer-text');
+  const sourceTag = document.getElementById('source-tag');
+  const chunksList = document.getElementById('chunks-list');
+  const chunksToggle = document.getElementById('chunks-toggle');
+  const evalPanel = document.getElementById('eval-panel');
+
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  sourceTag.textContent = source || '—';
+  evalPanel.style.display = 'none';
+
+  if (loading) {
+    answerEl.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
+    chunksList.innerHTML = '';
+    chunksList.classList.remove('open');
+    chunksToggle.classList.remove('open');
+    return;
+  }
+
+  typewrite(answerEl, text);
+
+  if (evalData && Object.keys(evalData).length) {
+    evalPanel.style.display = 'block';
+    const risk = (evalData.hallucination_risk || 'low').toLowerCase();
+    const badge = document.getElementById('eval-halluc-badge');
+    badge.textContent = `HALLUCINATION: ${risk.toUpperCase()}`;
+    badge.className = `eval-badge badge-${risk}`;
+    const dims = [
+      ['faith', evalData.faithfulness],
+      ['rel',   evalData.relevance],
+      ['comp',  evalData.completeness],
+      ['grnd',  evalData.groundedness],
+    ];
+    dims.forEach(([key, val]) => {
+      document.getElementById(`ev-${key}`).textContent = val ? `${val}/10` : '—';
+      setTimeout(() => {
+        document.getElementById(`evb-${key}`).style.width = val ? `${val * 10}%` : '0%';
+      }, 300);
+    });
+    document.getElementById('eval-verdict').textContent = evalData.verdict || '';
+  }
+
+  // Render chunks
+  const chunksSection = document.querySelector('.chunks-section');
+  chunksList.innerHTML = '';
+  chunksList.classList.remove('open');
+  chunksToggle.classList.remove('open');
+  if (chunks && chunks.length) {
+    chunksSection.style.display = 'block';
+    chunks.forEach((c, i) => {
+      const pct = ((c.score || 5) / 10 * 100).toFixed(0);
+      const div = document.createElement('div');
+      div.className = 'chunk-item';
+      div.innerHTML = `
+        <div class="chunk-header">
+          <div class="chunk-meta">
+            <span class="pill pill-src">${c.source || '?'}</span>
+            <span class="pill pill-page">p.${c.page || '?'}</span>
+          </div>
+          <div class="score-bar-wrap">
+            <span class="score-label">${c.score}/10</span>
+            <div class="score-bar"><div class="score-fill" style="width:0%" data-w="${pct}%"></div></div>
+          </div>
+        </div>
+        <div class="chunk-body">${escHtml(c.text.slice(0, 320))}${c.text.length > 320 ? '…' : ''}</div>
+      `;
+      chunksList.appendChild(div);
+    });
+    setTimeout(() => {
+      document.querySelectorAll('.score-fill').forEach(el => { el.style.width = el.dataset.w; });
+    }, 100);
+  } else {
+    chunksSection.style.display = 'none';
+  }
+}
+
+function toggleChunks() {
+  const list = document.getElementById('chunks-list');
+  const btn = document.getElementById('chunks-toggle');
+  list.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────────────
+function updateHistory() {
+  const section = document.getElementById('history-section');
+  const list = document.getElementById('history-list');
+  if (!S.history.length) return;
+  section.style.display = 'block';
+  list.innerHTML = '';
+  S.history.forEach((h, i) => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const timeStr = h.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    item.innerHTML = `
+      <div class="history-q" onclick="toggleHistory(this)">
+        <span class="history-q-text">${escHtml(h.q)}</span>
+        <span class="history-q-time">${timeStr}</span>
+      </div>
+      <div class="history-body${i === 0 ? ' open' : ''}">
+        <div class="history-ans">${renderMarkdown(h.answer)}</div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function toggleHistory(el) {
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ── UTILITIES ──────────────────────────────────────────────────────────────
+function renderMarkdown(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:rgba(139,92,246,0.15);padding:0.1em 0.4em;border-radius:4px;font-family:\'JetBrains Mono\',monospace;font-size:0.9em">$1</code>')
+    .replace(/^#{3} (.+)$/gm, '<h3 style="color:var(--cyan);font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;letter-spacing:0.1em;margin:1.4rem 0 0.4rem">$1</h3>')
+    .replace(/^#{2} (.+)$/gm, '<h2 style="color:var(--violet);font-family:\'JetBrains Mono\',monospace;font-size:0.9rem;letter-spacing:0.12em;margin:1.6rem 0 0.5rem;border-bottom:1px solid var(--border);padding-bottom:0.3rem">$1</h2>')
+    .replace(/^#{1} (.+)$/gm, '<h1 style="color:var(--text);font-size:1.1rem;margin:1.8rem 0 0.6rem">$1</h1>')
+    .replace(/^\* (.+)$/gm, '<li style="margin:0.3rem 0 0.3rem 1.2rem;list-style:disc">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li style="margin:0.3rem 0 0.3rem 1.2rem;list-style:decimal">$2</li>')
+    .replace(/(<li[^>]*>.*<\/li>\n?)+/g, s => `<ul style="padding:0;margin:0.4rem 0">${s}</ul>`)
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+async function typewrite(el, text, speed = 12) {
+  const html = renderMarkdown(text);
+  el.innerHTML = '';
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  el.appendChild(cursor);
+  let i = 0;
+  const chars = text.split('');
+  while (i < chars.length) {
+    el.innerHTML = renderMarkdown(text.slice(0, i + 1));
+    el.appendChild(cursor);
+    i++;
+    if (i % 4 === 0) await delay(speed);
+  }
+  cursor.remove();
+  el.innerHTML = html;
+}
+
+function animateNumber(id, target) {
+  const el = document.getElementById(id);
+  const duration = 900;
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(ease * target);
+    if (p < 1) requestAnimationFrame(tick);
+    else el.style.animation = 'count-up 0.4s ease both';
+  }
+  requestAnimationFrame(tick);
+}
+
+function triggerScan() {
+  const line = document.getElementById('scan-line');
+  line.classList.remove('active');
+  void line.offsetWidth;
+  line.classList.add('active');
+  setTimeout(() => line.classList.remove('active'), 3100);
+}
+
+function toast(msg, type = 'info') {
+  const stack = document.getElementById('toast-stack');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  stack.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── KICK OFF ───────────────────────────────────────────────────────────────
+runBoot();
+</script>
+</body>
+</html>
