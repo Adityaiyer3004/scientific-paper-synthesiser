@@ -32,6 +32,13 @@ print("[NeuroPaper] Ready.")
 state = {"chunks": [], "sources": [], "files": [], "index": None, "embeddings": None}
 
 
+def _encode(texts) -> np.ndarray:
+    if isinstance(texts, str):
+        texts = [texts]
+    t = embed_model.encode(texts, convert_to_tensor=True, show_progress_bar=False)
+    return np.array(t.cpu().tolist(), dtype=np.float32)
+
+
 def groq_call(client, *, retries=3, **kwargs):
     for attempt in range(retries):
         try:
@@ -72,7 +79,7 @@ def chunk_text(text: str, chunk_size: int = 500, source: str = "unknown") -> lis
 
 
 def build_faiss_index(chunks: list):
-    emb = embed_model.encode([c["text"] for c in chunks])
+    emb = _encode([c["text"] for c in chunks])
     if emb.ndim == 1:
         emb = emb.reshape(1, -1)
     idx = faiss.IndexFlatL2(emb.shape[1])
@@ -116,7 +123,7 @@ def score_chunks(chunks: list, question: str, model: str) -> list:
 
 
 def retrieve(query: str, model: str, top_k: int = 8, final_k: int = 3):
-    qv = np.array(embed_model.encode(query)).reshape(1, -1)
+    qv = _encode(query).reshape(1, -1)
     actual_k = min(top_k, len(state["chunks"]))
     _, idxs = state["index"].search(qv, actual_k)
     retrieved = [state["chunks"][i] for i in idxs[0] if i != -1]
