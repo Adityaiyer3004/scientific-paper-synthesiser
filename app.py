@@ -11,8 +11,10 @@ import numpy as np
 import re
 from sentence_transformers import SentenceTransformer
 from groq import Groq
+from groq import APIStatusError
 import os
 import json
+import time
 from textwrap import dedent
 from dotenv import load_dotenv
 
@@ -28,6 +30,17 @@ embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 print("[NeuroPaper] Ready.")
 
 state = {"chunks": [], "sources": [], "files": [], "index": None, "embeddings": None}
+
+
+def groq_call(client, *, retries=3, **kwargs):
+    for attempt in range(retries):
+        try:
+            return client.chat.completions.create(**kwargs)
+        except APIStatusError as e:
+            if e.status_code == 529 and attempt < retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            raise
 
 
 def extract_text_from_pdf(pdf_bytes: bytes, filename: str) -> list:
@@ -75,7 +88,7 @@ def parse_scores(raw: str, n: int) -> list:
 def score_chunks(chunks: list, question: str, model: str) -> list:
     client = Groq(api_key=GROQ_API_KEY)
     formatted = "\n\n".join(f"[CHUNK {i+1}]:\n{c['text']}" for i, c in enumerate(chunks))
-    resp = client.chat.completions.create(
+    resp = groq_call(client,
         model=model,
         messages=[
             {"role": "system", "content": dedent("""
@@ -117,7 +130,7 @@ def retrieve(query: str, model: str, top_k: int = 8, final_k: int = 3):
 def synthesize(chunks: list, question: str, model: str) -> str:
     client = Groq(api_key=GROQ_API_KEY)
     texts = "\n\n".join(f"[SOURCE {i+1}]: {c['text']}" for i, c in enumerate(chunks))
-    resp = client.chat.completions.create(
+    resp = groq_call(client,
         model=model,
         messages=[
             {"role": "system", "content": dedent("""
@@ -149,7 +162,7 @@ def synthesize(chunks: list, question: str, model: str) -> str:
 
 def answer(context: str, question: str, model: str) -> str:
     client = Groq(api_key=GROQ_API_KEY)
-    resp = client.chat.completions.create(
+    resp = groq_call(client,
         model=model,
         messages=[
             {"role": "system", "content": dedent("""
@@ -188,7 +201,7 @@ def answer(context: str, question: str, model: str) -> str:
 
 def summarize(text: str, model: str) -> str:
     client = Groq(api_key=GROQ_API_KEY)
-    resp = client.chat.completions.create(
+    resp = groq_call(client,
         model=model,
         messages=[
             {"role": "system", "content": dedent("""
@@ -233,7 +246,7 @@ def summarize(text: str, model: str) -> str:
 def guardrail_input(question: str, uploaded_files: list) -> dict:
     client = Groq(api_key=GROQ_API_KEY)
     try:
-        resp = client.chat.completions.create(
+        resp = groq_call(client,
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": dedent("""
@@ -267,7 +280,7 @@ def guardrail_input(question: str, uploaded_files: list) -> dict:
 def judge_summary(source_text: str, summary: str) -> dict:
     client = Groq(api_key=GROQ_API_KEY)
     try:
-        resp = client.chat.completions.create(
+        resp = groq_call(client,
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": dedent("""
@@ -310,7 +323,7 @@ def judge_summary(source_text: str, summary: str) -> dict:
 def judge_answer(question: str, context: str, answer: str) -> dict:
     client = Groq(api_key=GROQ_API_KEY)
     try:
-        resp = client.chat.completions.create(
+        resp = groq_call(client,
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": dedent("""
